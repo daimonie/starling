@@ -33,7 +33,7 @@ for i in range(0,iMax):
     
     
     theta = 2.0 * np.pi / iMax * (i + r * 0.5 )
-    phi = np.pi / 2.0 * (1 + r * 5.0 * i/ iMax )
+    phi = np.pi / 2.0 * (1 + r * 0.01 * i/ iMax )
     lastpositions[i,0] = 3.0 * np.cos( theta ) * np.sin( phi )
     lastpositions[i,1] = 3.0 * np.sin( theta ) * np.sin( phi )
     lastpositions[i,2] = 3.0 * np.cos( phi )
@@ -43,7 +43,7 @@ def chase(r):
     newpositions = np.zeros((iMax,3));
     for i in range(0,iMax):
         theta = 2.0 * np.pi / iMax * (i + r * 0.5 )
-        phi = np.pi / 2.0 * (1 + r * 5.0 * i/ iMax )
+        phi = np.pi / 2.0 * (1 + r * 0.01 * i/ iMax )
         newpositions[i,0] = 3.0 * np.cos( theta ) * np.sin( phi )
         newpositions[i,1] = 3.0 * np.sin( theta ) * np.sin( phi )
         newpositions[i,2] = 3.0 * np.cos( phi )
