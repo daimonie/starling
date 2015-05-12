@@ -26,7 +26,7 @@ def newFrame(r):
     ax.cla()
     ax.quiver(x, y, z, u, v, w, length=0.1)
     
-iMax = 600
+iMax = 60
 lastpositions = np.zeros((iMax,3));
 for i in range(0,iMax):
     r = 0
