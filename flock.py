@@ -31,6 +31,11 @@ class Flock:
     display = 1
     order = 0.0
     orderPrime = 0.0
+     
+    i0 = None
+    i1 = None
+    i2 = None 
+    i3 = None   
     def __init__(self):
         """Mostly empty, except for a joke."""
         print "We are boid."
@@ -52,15 +57,12 @@ class Flock:
         
     def initBoids(self):
         """Function that initialises the necessary matrices and such. """
-        self.positions = np.random.rand(self.number, 3)* self.boxSize
-        
-        randomness = 0.99;
-        
+        self.positions = 1.0*self.boxSize*np.ones((self.number,3)) - 2.0*np.random.rand(self.number, 3)* self.boxSize
+                
         self.length = self.boxSize*2.0/self.number
-        self.velocities = np.random.rand(self.number,3) * randomness
-        self.velocities[:, :] += 1 - randomness
-        
+        self.velocities = np.random.rand(self.number,3)*2 - 1 * np.ones((self.number,3), dtype=np.float)
         self.velocities /= np.sqrt( np.sum( np.square(self.velocities) ) )
+        self.velocities *= self.speed
         
         self.sensitivities = np.ones((self.number,1), dtype=np.float)
         
@@ -72,16 +74,23 @@ class Flock:
     def behaviour(self):
         """This returns the proper calculation given self.mode"""
         if self.mode == 0: #Simplest behaviour
-            return ethology.simplebehaviour( positions = self.positions, velocities = self.velocities, tau = self.tau, eta=self.eta, sensitivities=self.sensitivities, number=self.number )
+            return ethology.simplebehaviour( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number )
         elif self.mode == 1: #Simple + habitat
-            return ethology.simplehabitat( positions = self.positions, velocities = self.velocities, tau = self.tau, eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize, habitatstrength=self.habitatStrength)
+            return ethology.simplehabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength)
+        elif self.mode == 2: #Simple + habitat + nteraction
+            return ethology.interactionhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3)
     def setAxes(self):
         """Proper axes given self.mode"""
         if self.mode == 0: 
             self.axis.set_xlim(np.min( newpositions[:,0]), np.max( newpositions[:,0]))
             self.axis.set_ylim(np.min( newpositions[:,1]), np.max( newpositions[:,1]))
             self.axis.set_zlim(np.min( newpositions[:,2]), np.max( newpositions[:,2])) 
-        elif self.mode == 1: 
+        elif self.mode == 1 or self.mode == 2: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
             self.axis.set_zlim( -self.habitatSize, self.habitatSize )
