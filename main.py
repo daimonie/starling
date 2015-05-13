@@ -24,17 +24,17 @@ if flocksim == 0:
 elif flocksim == 1:
     starlings.mode = 2
      
-    starlings.number = 60
+    starlings.number = 200
     starlings.tau = 0.1
-    starlings.eta = 0.15
+    starlings.eta = 0.25
     starlings.speed = 30.0
-    starlings.boxSize = 10.0
+    starlings.boxSize = 50.0
     starlings.habitatSize = 200.00
     starlings.habitatStrength = starlings.number / 0.3
     starlings.initBoids()
         
-    starlings.i0 = 2.0
-    starlings.i1 = 0.4
+    starlings.i0 = 0.0
+    starlings.i1 = 10.9
     starlings.i2 = 0.35
     starlings.i3 = 3.5
     starlings.i4 = -0.20

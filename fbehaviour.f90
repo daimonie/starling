@@ -34,14 +34,25 @@ module ethology
             newpositions(i,:) = positions(i,:) + tau * velocities(i, :)
             newvelocities(i,:) = velocities(i,:)
             do j = 1, number
-                if ( i /= j) then
+                if ( i < j) then
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
                     if (distancesquared < sensitivities(i)**2 ) then
                         newvelocities(i,:) = newvelocities(i,:) + velocities(j,:)
+                        newvelocities(j,:) = newvelocities(j,:) + velocities(i,:)
                     end if
                 end if
             end do
-             
+        end do
+        !$omp end parallel do
+        
+        
+        !$omp parallel do &
+        !$omp default(none) & 
+        !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
+        !$omp rotationy, rotation) &
+        !$omp firstprivate(eta,pi, velocities) &
+        !$omp shared(newvelocities)
+        do i = 1, number 
             speedsquared = dot_product(newvelocities(i,:), newvelocities(i,:))
             if (speedsquared > 0) then
                 newvelocities(i,:) = newvelocities(i,:) / (speedsquared)**0.5
@@ -95,10 +106,11 @@ module ethology
             newpositions(i,:) = positions(i,:) + tau * velocities(i, :)
             newvelocities(i,:) = velocities(i,:)
             do j = 1, number
-                if ( i /= j) then
+                if ( i < j) then
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
                     if (distancesquared < sensitivities(i)**2 ) then
                         newvelocities(i,:) = newvelocities(i,:) + velocities(j,:)
+                        newvelocities(j,:) = newvelocities(j,:) + velocities(i,:)
                     end if
                 end if
             end do
@@ -106,13 +118,25 @@ module ethology
             distancesquared = dot_product(positions(i,:), positions(i,:))
             if (distancesquared**0.5 + sensitivities(i) > habitatsize) then
                 newvelocities(i,:) = newvelocities(i,:) - habitatstrength * positions(i,:)/distancesquared**0.5
-            end if 
+            end if  
+        end do
+        !$omp end parallel do
+        
+        
+        !$omp parallel do &
+        !$omp default(none) & 
+        !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
+        !$omp rotationy, rotation) &
+        !$omp firstprivate(eta,pi, velocities) &
+        !$omp shared(newvelocities)
+        do i = 1, number 
             speedsquared = dot_product(newvelocities(i,:), newvelocities(i,:))
             if (speedsquared > 0) then
                 newvelocities(i,:) = newvelocities(i,:) / (speedsquared)**0.5
             else
                 newvelocities(i,:) = velocities(i,:)
-            end if
+            end if 
+            
             alpha = eta * pi - 2 * eta * pi * rand() 
             beta  = eta * pi - 2 * eta * pi * rand() 
             gamma = eta * pi - 2 * eta * pi * rand() 
@@ -160,37 +184,53 @@ module ethology
             newpositions(i,:) = positions(i,:) + tau * velocities(i, :)
             newvelocities(i,:) = velocities(i,:)
             do j = 1, number
-                if ( i /= j) then
+                if ( i < j) then
                     force = 0.00_8
                         
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
                     x = distancesquared**0.5
                     if (x < sensitivities(i) ) then
                         newvelocities(i,:) = newvelocities(i,:) + velocities(j,:)
+                        newvelocities(j,:) = newvelocities(j,:) + velocities(i,:)
                         
                         !Let us add an unnecessarily complex calculation for some sort of force.  
                         !The idea is that it repulses at close distance, attracts at distances near sensitivity_i 
-                    else if( x < i3*3.0) then 
-                        if (x < i0) then
-                            force = i1 / (i2 + x)
-                        else if(x > i3) then
-                            force = i4 * (x - i3) / (1.0 + exp( (x-sensitivities(i))/(2.0*i5**2)))
-                        end if 
+                    else if( x < i3*3.0) then  
+!                         force = i0 + i1 / (i2 + x) + i4 * (x - i3) / (1.0 + exp( (x-sensitivities(i))/(2.0*i5**2))) 
+                    !     y[i] = i0 + i1/( 1.0 + np.exp((thisx-i1)/(2*i2**2))) 
+                    !     if thisx > i3:
+                    !         y[i] += i4*(thisx-i3)*1.0 / ( 1.0 + np.exp( (thisx-s)/(2*i5**2)))
+                        force = i0 + i1 / (1.0 + exp( (x-i1)/(2*i2**2)))
+                        if (x > i3) then
+                            force = force + i4 * (x-i3) * 1.0 / (1.0 + exp( (x-sensitivities(i))/(2*i5*2)))
+                        end if
                     end if
                     newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - positions(j,:))/ x * force * tau
+                    newvelocities(j,:) = newvelocities(j,:) - (positions(i,:) - positions(j,:))/ x * force * tau
                 end if
             end do
             !Now, distance from centre
             distancesquared = dot_product(positions(i,:), positions(i,:))
             if (distancesquared**0.5 + sensitivities(i) > habitatsize) then
                 newvelocities(i,:) = newvelocities(i,:) - habitatstrength * positions(i,:)/distancesquared**0.5
-            end if
+            end if 
+        end do
+        !$omp end parallel do
+        
+        
+        !$omp parallel do &
+        !$omp default(none) & 
+        !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
+        !$omp rotationy, rotation) &
+        !$omp firstprivate(eta,pi, velocities) &
+        !$omp shared(newvelocities)
+        do i = 1, number 
             speedsquared = dot_product(newvelocities(i,:), newvelocities(i,:))
             if (speedsquared > 0) then
                 newvelocities(i,:) = newvelocities(i,:) / (speedsquared)**0.5
             else
                 newvelocities(i,:) = velocities(i,:)
-            end if
+            end if 
             
             alpha = eta * pi - 2 * eta * pi * rand() 
             beta  = eta * pi - 2 * eta * pi * rand() 
