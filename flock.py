@@ -85,7 +85,7 @@ class Flock:
         self.axisOrder.grid()
         
         self.axisOrderPrime.set_xlim( 0, 10.0)
-        self.axisOrderPrime.set_ylim( 0, 2.0)
+        self.axisOrderPrime.set_ylim( 0, 1.0)
          
         self.axisOrderPrime.grid()
         self.axisOrder.set_title("Order parameter")
@@ -111,6 +111,7 @@ class Flock:
         self.orderCalculation()
     def show(self):
         """Function that sets the animation running""" 
+        self.axisOrderPrime.set_ylim( 0, 1.0/self.tau)
         self.ani = animation.FuncAnimation(self.figure, self.evolve, interval=self.display) 
         plt.show()
     def behaviour(self):
@@ -268,6 +269,6 @@ class Flock:
         self.axisOrderPrime.set_xlim(0, int(1+r*self.tau/10.00) * 10.00)
         
         self.lineOrder.set_data( self.timeData, self.orderData )
-        self.lineOrderPrime.set_data( self.timeData, self.orderPrime )
+        self.lineOrderPrime.set_data( self.timeData, self.primeData )
   
         print "%d\t%2.3e\t%2.3e." % (r, self.order, self.orderPrime)

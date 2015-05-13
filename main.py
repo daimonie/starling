@@ -68,9 +68,9 @@ elif flocksim == 2:
     starlings.i5 = 0.65 
      
     starlings.velocities[:,0] = starlings.velocities[:,1] = 0.0
-    starlings.positions -= 0.3 * starlings.habitatSize
+    starlings.positions -= 0.2* starlings.habitatSize
 
-    starlings.sensitivities *= 25.00
+    starlings.sensitivities *= 5.00
     starlings.display = 1
     starlings.length = 5.0
     
