@@ -268,6 +268,6 @@ class Flock:
         self.axisOrderPrime.set_xlim(0, int(1+r*self.tau/10.00) * 10.00)
         
         self.lineOrder.set_data( self.timeData, self.orderData )
-        self.lineOrderPrime.set_data( self.timeData, self.orderData )
+        self.lineOrderPrime.set_data( self.timeData, self.orderPrime )
   
         print "%d\t%2.3e\t%2.3e." % (r, self.order, self.orderPrime)
