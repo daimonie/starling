@@ -161,23 +161,22 @@ module ethology
             newvelocities(i,:) = velocities(i,:)
             do j = 1, number
                 if ( i /= j) then
+                    force = 0.00_8
+                        
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
-                    if (distancesquared < sensitivities(i)**2 ) then
+                    x = distanceSquared**0.5
+                    if (x < sensitivities(i) ) then
                         newvelocities(i,:) = newvelocities(i,:) + velocities(j,:)
                         
                         !Let us add an unnecessarily complex calculation for some sort of force.  
                         !The idea is that it repulses at close distance, attracts at distances near sensitivity_i
-                        x = distanceSquared**0.5
-                        force = 0.00_8
                         if (x < i0) then
                             force = i1
-                        else if (x > i2) then
-                            force = i3
-                        end if 
-                        
-                        newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - positions(j,:))/ x * force * tau
-                        
+                        end if   
+                    else if (x > i2) then
+                        force = i3
                     end if
+                    newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - positions(j,:))/ x * force * tau
                 end if
             end do
             !Now, distance from centre
