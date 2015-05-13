@@ -314,8 +314,7 @@ module ethology
                 distancesquared = dot_product( positions(i,:) - predatorlocation(p,:), positions(i,:) - predatorlocation(p,:))
                 x = distancesquared**0.5
                 if (x < predatorsense(i)) then 
-                    newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - predatorlocation(p,:))/ x * predatorstrength(p)
-                    print *, "Oh no a shark"
+                    newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - predatorlocation(p,:))/ x * predatorstrength(p) 
                 end if
             end do
             !Now, distance from centre

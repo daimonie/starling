@@ -49,6 +49,8 @@ class Flock:
     predatorLocation = None
     sharkPath    = None
     predatorNumber = 10
+    
+    scatterPlot = False
     def __init__(self):
         """Mostly empty, except for a joke."""
         print "We are boid."
@@ -245,7 +247,10 @@ class Flock:
         newpositions, diff = self.behaviour() 
                 
         self.axis.cla ()
-        self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], diff[:,0], diff[:,1], diff[:,2], length=self.length);
+        if self.scatterPlot == True:
+            self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b');
+        else:
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], diff[:,0], diff[:,1], diff[:,2], length=self.length);
         
         self.setAxes()
         
