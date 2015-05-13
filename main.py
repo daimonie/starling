@@ -25,7 +25,7 @@ elif flocksim == 1:
     starlings.number = 100
     starlings.tau = 0.1
     starlings.eta = 0.5 
-    starlings.boxSize = 20.0
+    starlings.boxSize = 100.0
     starlings.habitatSize = 200.00
     starlings.habitatStrength = 1.05 * starlings.number
     starlings.speed = 25.00
