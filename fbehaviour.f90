@@ -127,12 +127,12 @@ module ethology
         !$omp end parallel do
     end subroutine simplehabitat
     subroutine interactionhabitat(number, positions, velocities, sensitivities, tau, eta, i0, i1, &
-        i2, i3, newpositions, newvelocities, habitatsize, habitatstrength)
-        implicit none
+        i2, i3, i4, i5, newpositions, newvelocities, habitatsize, habitatstrength)
+        implicit none 
         !Pretty much the same function but we simulate a spherical habitat by using virtual fish
         integer, intent(in) :: number
         double precision, intent(in):: tau, eta, habitatSize, habitatstrength, &
-            i0, i1, i2, i3
+            i0, i1, i2, i3, i4, i5
         double precision, intent(in), dimension(number, 3) :: positions, velocities
         double precision, intent(in), dimension(number) :: sensitivities
 
@@ -154,7 +154,7 @@ module ethology
         !$omp default(none) & 
         !$omp private(i,j,distancesquared,alpha,beta,gamma,rotation,rotationz,rotationx,rotationy,speedsquared, force, x) &
         !$omp firstprivate(number,positions,velocities,tau,eta,sensitivities,pi, habitatsize, habitatstrength, &
-        !$omp i0, i1, i2, i3) &
+        !$omp i0, i1, i2, i3, i4, i5) &
         !$omp shared(newpositions,newvelocities)
         do i = 1, number
             newpositions(i,:) = positions(i,:) + tau * velocities(i, :)
@@ -164,17 +164,18 @@ module ethology
                     force = 0.00_8
                         
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
-                    x = distanceSquared**0.5
+                    x = distancesquared**0.5
                     if (x < sensitivities(i) ) then
                         newvelocities(i,:) = newvelocities(i,:) + velocities(j,:)
                         
                         !Let us add an unnecessarily complex calculation for some sort of force.  
-                        !The idea is that it repulses at close distance, attracts at distances near sensitivity_i
+                        !The idea is that it repulses at close distance, attracts at distances near sensitivity_i 
+                    else if( x < i3*3.0) then 
                         if (x < i0) then
-                            force = i1
-                        end if   
-                    else if (x > i2) then
-                        force = i3
+                            force = i1 / (i2 + x)
+                        else if(x > i3) then
+                            force = i4 * (x - i3) / (1.0 + exp( (x-sensitivities(i))/(2.0*i5**2)))
+                        end if 
                     end if
                     newvelocities(i,:) = newvelocities(i,:) + (positions(i,:) - positions(j,:))/ x * force * tau
                 end if

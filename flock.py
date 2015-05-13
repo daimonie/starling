@@ -36,6 +36,8 @@ class Flock:
     i1 = None
     i2 = None 
     i3 = None   
+    i4 = None   
+    i5 = None   
     def __init__(self):
         """Mostly empty, except for a joke."""
         print "We are boid."
@@ -83,13 +85,13 @@ class Flock:
         elif self.mode == 2: #Simple + habitat + nteraction
             return ethology.interactionhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
-                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3)
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
     def setAxes(self):
         """Proper axes given self.mode"""
         if self.mode == 0: 
-            self.axis.set_xlim(np.min( newpositions[:,0]), np.max( newpositions[:,0]))
-            self.axis.set_ylim(np.min( newpositions[:,1]), np.max( newpositions[:,1]))
-            self.axis.set_zlim(np.min( newpositions[:,2]), np.max( newpositions[:,2])) 
+            self.axis.set_xlim(np.min( self.positions[:,0]), np.max( self.positions[:,0]))
+            self.axis.set_ylim(np.min( self.positions[:,1]), np.max( self.positions[:,1]))
+            self.axis.set_zlim(np.min( self.positions[:,2]), np.max( self.positions[:,2])) 
         elif self.mode == 1 or self.mode == 2: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
