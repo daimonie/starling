@@ -361,18 +361,40 @@ module ethology
         end do
         !$omp end parallel do
     end subroutine sharkbowl 
-    subroutine rotatepoints(number, points, difference, returnpoints)
+    subroutine rotatepoints(number, points, axis, theta, returnpoints)
         implicit none
         
         integer, intent(in) :: number
         
         double precision, intent(in), dimension(number, 3) :: points 
-        double precision, intent(in), dimension(3) :: difference
+        double precision, intent(in), dimension(3) :: axis
+        double precision, intent(in) :: theta
         
         double precision, intent(out), dimension(number, 3) :: returnpoints
-     
+      
+        double precision, dimension(3) :: centre
+        double precision, dimension(3,3) :: rotation 
+        
         integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads, i
         
-        returnpoints = points
+        centre = sum(points, dim=1) / number 
+         
+        rotation(1,1) = cos(theta) + axis(1)**2 * ( 1 - cos(theta))
+        rotation(1,2) = axis(1) * axis(2) * (1 - cos(theta)) - axis(3) * sin(theta)
+        rotation(1,3) = axis(1) * axis(3) * (1 - cos(theta)) + axis(2) * sin(theta)
+        
+        
+        rotation(2,1) = axis(2) * axis(1) * (1 - cos(theta)) + axis(3) * sin(theta)
+        rotation(2,2) = cos(theta) + axis(2)**2 * (1 - cos(theta))
+        rotation(2,3) = axis(2) * axis(3) * (1 - cos(theta)) - axis(1) * sin(theta)
+        
+        rotation(3,1) = axis(3) * axis(1) * (1 - cos(theta)) - axis(2) * sin(theta)
+        rotation(3,2) = axis(3) * axis(2) * (1 - cos(theta)) + axis(1) * sin(theta)
+        rotation(3,3) = cos(theta) + axis(3)**2 * (1 - cos(theta))
+        
+        print *, "mm", sum(matmul( rotation, transpose(rotation)))/3.0, "\n" 
+        do i = 1, number
+            returnpoints(i,:) = centre + matmul( rotation, points(i,:) - centre)
+        end do 
     end subroutine rotatepoints
 end module ethology
