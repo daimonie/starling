@@ -2,7 +2,7 @@ from flock import Flock
 import numpy as np
 
 starlings = Flock()
-flocksim = 2
+flocksim = 0
 if flocksim == 0:
     starlings.mode = 1
     starlings.number = 60

@@ -117,8 +117,11 @@ class Flock:
     def behaviour(self):
         """This returns the proper calculation given self.mode"""
         if self.mode == 0: #Simplest behaviour
-            return ethology.simplebehaviour( positions = self.positions, velocities = self.velocities, tau = self.tau,
+            newpositions, diff = ethology.simplebehaviour( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number )
+            newpositions -= np.sum( newpositions, axis=0)/self.number
+            
+            return newpositions, diff
         elif self.mode == 1: #Simple + habitat
             return ethology.simplehabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
