@@ -3,6 +3,14 @@ import numpy as np
 
 starlings = Flock()
 flocksim = 2
+
+starlings.viscosity = 1e0      
+starlings.torqueCutOff = 1e10     
+starlings.alignWithNeighbors = 1e10   
+starlings.seeTheFlock1 = 1e10      
+starlings.seeTheFlock2 = 1e10      
+starlings.seeTheFlock3 = 1e10    
+
 if flocksim == 0:
     starlings.mode = 1
     starlings.number = 60

@@ -12,6 +12,14 @@ class Flock:
     velocities = None
     sensitivities = None
     eta = None
+    #Torque parameters:  
+    orientations = None   
+    viscosity = None       
+    torqueCutOff = None     
+    alignWithNeighbors = None  
+    seeTheFlock1 = None    
+    seeTheFlock2 = None     
+    seeTheFlock3 = None     
     
     speed = None
     figure = None
@@ -111,6 +119,9 @@ class Flock:
         self.sensitivities = np.ones((self.number,1), dtype=np.float)
         
         self.orderCalculation()
+        
+        self.orientations = self.velocities / self.speed 
+        
     def show(self):
         """Function that sets the animation running""" 
         self.axisOrderPrime.set_ylim( 0, 1.0/self.tau)
@@ -139,6 +150,13 @@ class Flock:
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
         
         #predatorSense, predatorStrength, predatorLocation)
+    def calculateRotation(self):        
+        '''Calculates the new orientations of the individuals'''
+        neworientations = ethology.simplerotation(number = self.number, viscosity = self.viscosity, cutoff = self.torqueCutOff, 
+                                                  tau = self.tau, tboundary1 = self.seeTheFlock1, tboundary2 = self.seeTheFlock2, 
+                                                  tboundary3 = self.seeTheFlock3, talign = self.alignWithNeighbors, 
+                                                  positions = self.positions, orientations = self.orientations)
+        return neworientations
     def setAxes(self):
         """Proper axes given self.mode"""
         if self.mode == 0: 
@@ -227,12 +245,13 @@ class Flock:
     def evolve(self, r):
         """Function that calculates the next frame""" 
         newpositions, diff = self.behaviour() 
+        neworientations = self.calculateRotation()
                 
         self.axis.cla ()
         if self.scatterPlot == True:
             self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
         else:
-            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], diff[:,0], diff[:,1], diff[:,2], length=self.length);
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], neworientations[:,0], neworientations[:,1], neworientations[:,2], length=self.length);
         
         self.setAxes()
         

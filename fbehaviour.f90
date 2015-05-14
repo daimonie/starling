@@ -361,48 +361,88 @@ module ethology
         end do
         !$omp end parallel do
     end subroutine sharkbowl 
-    subroutine rotatepoints(number, points, axis, theta, returnpoints)
+    subroutine rotatepoints(number, points, difference, returnpoints)
         implicit none
         
         integer, intent(in) :: number
         
         double precision, intent(in), dimension(number, 3) :: points 
-        double precision, intent(in), dimension(3) :: axis
-        double precision, intent(in) :: theta
+        double precision, intent(in), dimension(3) :: difference
         
         double precision, intent(out), dimension(number, 3) :: returnpoints
-      
-        double precision, dimension(3) :: centre
-        double precision, dimension(3,3) :: rotation 
-        
+     
         integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads, i
         
-        centre = sum(points, dim=1) / number 
-         
-        rotation(1,1) = cos(theta) + axis(1)**2 * ( 1 - cos(theta))
-        rotation(1,2) = axis(1) * axis(2) * (1 - cos(theta)) - axis(3) * sin(theta)
-        rotation(1,3) = axis(1) * axis(3) * (1 - cos(theta)) + axis(2) * sin(theta)
+        returnpoints = points
+    end subroutine rotatepoints
+
+    subroutine simplerotation(number, positions, orientations, viscosity, cutOff, tau, Tboundary1, Tboundary2, Tboundary3, &
+        Talign, neworientations)
+        implicit none
         
+        integer, intent(in) :: number
+	double precision, intent(in) :: viscosity, cutOff, tau, Tboundary1, Tboundary2, Tboundary3, Talign	
         
-        rotation(2,1) = axis(2) * axis(1) * (1 - cos(theta)) + axis(3) * sin(theta)
-        rotation(2,2) = cos(theta) + axis(2)**2 * (1 - cos(theta))
-        rotation(2,3) = axis(2) * axis(3) * (1 - cos(theta)) - axis(1) * sin(theta)
-        
-        rotation(3,1) = axis(3) * axis(1) * (1 - cos(theta)) - axis(2) * sin(theta)
-        rotation(3,2) = axis(3) * axis(2) * (1 - cos(theta)) + axis(1) * sin(theta)
-        rotation(3,3) = cos(theta) + axis(3)**2 * (1 - cos(theta))
-        print *, "Rotation ends up at ", sum( matmul(rotation, transpose(rotation))) 
-        
-        
-        call omp_set_num_threads(omp_get_max_threads());  
+        double precision, intent(in), dimension(number, 3) :: positions, orientations 
+
+        double precision, intent(out), dimension(number, 3) :: neworientations
+     
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads, i, j
+	double precision :: distancesquared, factor
+	integer, dimension(number) :: numNeighbors
+	double precision, dimension(number) :: angleCM, localCMmagnitude
+	double precision, dimension(number, 3) :: torque, torqueAlign, torqueBoundary, localCM
+
+
+	distancesquared = 0.00
+	numNeighbors(:) = 0
+	localCM(:,:) = 0.00
+	call omp_set_num_threads(omp_get_max_threads());
         !$omp parallel do &
         !$omp default(none) & 
-        !$omp private(i) &
-        !$omp firstprivate(centre, rotation, points) &
-        !$omp shared(returnpoints)
+        !$omp private(i,j,distancesquared) &
+        !$omp firstprivate(number,positions,cutOff) &
+        !$omp shared(torqueAlign,localCM,numNeighbors,orientations)
         do i = 1, number
-            returnpoints(i,:) = centre + matmul( rotation, points(i,:) - centre)
-        end do 
+            do j = 1, number
+                if (i < j) then
+                    distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
+                    if (distancesquared < cutOff**2 ) then
+                        torqueAlign(i,:) = torqueAlign(i,:) + orientations(i,:) - orientations(j,:)
+                        torqueAlign(j,:) = torqueAlign(j,:) + orientations(j,:) - orientations(i,:)
+			localCM(i,:) = localCM(i,:) + positions(j,:)
+			localCM(j,:) = localCM(j,:) + positions(i,:)
+			numNeighbors(i) = numNeighbors(i) + 1
+			numNeighbors(j) = numNeighbors(j) + 1
+                    end if
+                end if
+            end do
+        end do	
         !$omp end parallel do
-    end subroutine rotatepoints
+
+	factor = 0.00
+        torqueAlign = torqueAlign*(-1.0)*Talign
+	torqueBoundary(:,:) = 0.00
+	!For each paricle, calculate the angle between the orientation of the particle and the vector pointing to the center of mass of its domain of vision
+	!Also calculate torqueBoundary, the torque that tries to align the orientation of each particle in the direction of the flock bulk. Three parameters can be varied
+	angleCM(:) = 0.00
+	do i = 1, number
+		if (numNeighbors(i) > 0) then
+			localCM(i,:) = localCM(i,:) / numNeighbors(i)
+			localCMmagnitude(i) = (dot_product(localCM(i,:), localCM(i,:)))**0.5
+			angleCM(i) = abs(acos( dot_product(orientations(i,:), localCM(i,:)) / localCMmagnitude(i) ))
+			factor = Tboundary1 * angleCM(i) + Tboundary2 * localCMmagnitude(i) + Tboundary2 * angleCM(i) * localCMmagnitude(i)
+			torqueBoundary(i, :) = (localCM(i,:) / localCMmagnitude(i)) * factor
+		else if (numNeighbors(i) == 0) then
+			torqueBoundary(i, :) = [0.0,0.0,0.0]
+		end if
+	end do
+	 
+	torque = torqueAlign + torqueBoundary
+
+	neworientations = orientations + tau * torque / viscosity
+	do i = 1, number
+		neworientations(i,:) = neworientations(i,:) / (dot_product(neworientations(i,:),neworientations(i,:)))**0.5
+	end do
+    end subroutine simplerotation
 end module ethology
