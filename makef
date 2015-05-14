@@ -1,1 +1,2 @@
+clear
 f2py --fcompiler=gfortran --f90flags=-fopenmp -lgomp -m -c fbehaviour fbehaviour.f90

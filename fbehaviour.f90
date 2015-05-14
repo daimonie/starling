@@ -17,7 +17,7 @@ module ethology
         double precision :: distancesquared, pi, alpha, beta, gamma, speedsquared
         
         double precision, dimension(3,3) :: rotation, rotationx, rotationy, rotationz
-        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads;  
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads  
         
         pi = 4.0*atan(1.004)
         
@@ -25,6 +25,7 @@ module ethology
         newvelocities = velocities
 
         distancesquared = 0.00
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i,j,distancesquared,alpha,beta,gamma,rotation,rotationz,rotationx,rotationy, speedsquared) &
@@ -46,6 +47,7 @@ module ethology
         !$omp end parallel do
         
         
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
@@ -89,7 +91,7 @@ module ethology
         double precision :: distancesquared, pi, alpha, beta, gamma, speedsquared
         
         double precision, dimension(3,3) :: rotation, rotationx, rotationy, rotationz
-        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads;  
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads  
         
         pi = 4.0*atan(1.004)
         
@@ -97,6 +99,7 @@ module ethology
         newvelocities = velocities
 
         distancesquared = 0.00
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i,j,distancesquared,alpha,beta,gamma,rotation,rotationz,rotationx,rotationy,speedsquared) &
@@ -123,6 +126,7 @@ module ethology
         !$omp end parallel do
         
         
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
@@ -166,7 +170,7 @@ module ethology
         double precision :: distancesquared, pi, alpha, beta, gamma, speedsquared, force, x
         
         double precision, dimension(3,3) :: rotation, rotationx, rotationy, rotationz
-        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads;  
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads  
         
         pi = 4.0*atan(1.004)
         
@@ -174,6 +178,7 @@ module ethology
         newvelocities = velocities
 
         distancesquared = 0.00
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i,j,distancesquared,alpha,beta,gamma,rotation,rotationz,rotationx,rotationy,speedsquared, force, x) &
@@ -218,6 +223,7 @@ module ethology
         !$omp end parallel do
         
         
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
@@ -266,7 +272,7 @@ module ethology
         double precision :: distancesquared, pi, alpha, beta, gamma, speedsquared, force, x
         
         double precision, dimension(3,3) :: rotation, rotationx, rotationy, rotationz
-        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads;  
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads  
         
         pi = 4.0*atan(1.004)
         
@@ -274,6 +280,7 @@ module ethology
         newvelocities = velocities
 
         distancesquared = 0.00
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i,j,distancesquared,alpha,beta,gamma,rotation,rotationz,rotationx,rotationy,speedsquared, force,x,p) &
@@ -326,6 +333,7 @@ module ethology
         !$omp end parallel do
         
         
+        call omp_set_num_threads(omp_get_max_threads());  
         !$omp parallel do &
         !$omp default(none) & 
         !$omp private(i, speedsquared, alpha, beta, gamma, rotationz, rotationx, &
@@ -352,5 +360,19 @@ module ethology
             newvelocities(i,:) =  matmul(rotation, newvelocities(i,:))
         end do
         !$omp end parallel do
-    end subroutine sharkbowl
+    end subroutine sharkbowl 
+    subroutine rotatepoints(number, points, difference, returnpoints)
+        implicit none
+        
+        integer, intent(in) :: number
+        
+        double precision, intent(in), dimension(number, 3) :: points 
+        double precision, intent(in), dimension(3) :: difference
+        
+        double precision, intent(out), dimension(number, 3) :: returnpoints
+     
+        integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads, i
+        
+        returnpoints = points
+    end subroutine rotatepoints
 end module ethology

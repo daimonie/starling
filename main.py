@@ -2,7 +2,7 @@ from flock import Flock
 import numpy as np
 
 starlings = Flock()
-flocksim = 0
+flocksim = 2
 if flocksim == 0:
     starlings.mode = 1
     starlings.number = 60
@@ -77,7 +77,7 @@ elif flocksim == 2:
     starlings.initShark()
     starlings.predatorSense *= 50.00
     starlings.predatorStrength *= 5.00
-    starlings.sharkPath = 0
+    starlings.sharkSpeed = 144.00
     
     starlings.show()
 else: 

@@ -46,9 +46,9 @@ class Flock:
     i5 = None    
     predatorSense = None
     predatorStrength = None
-    predatorLocation = None
-    sharkPath    = None
+    predatorLocation = None 
     predatorNumber = 10
+    predatorLocationPrevious = None
     
     scatterPlot = False
     def __init__(self):
@@ -130,7 +130,7 @@ class Flock:
             return ethology.interactionbowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
-        elif self.mode == 3: #Simple + habitat + nteraction + SHARK
+        elif self.mode == 3: #Simple + habitat + nteraction + SHARK 
             return ethology.sharkbowl( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
@@ -146,7 +146,49 @@ class Flock:
         elif self.mode == 1 or self.mode == 2 or self.mode == 3: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
-            self.axis.set_zlim( -self.habitatSize, self.habitatSize )
+            self.axis.set_zlim( -self.habitatSize, self.habitatSize ) 
+            
+    def orderCalculation(self):
+        """Calculate the order parameter and its derivative"""
+        vsum = np.sum( self.velocities, axis=0) 
+        newOrder = 1.0/self.number/self.speed * np.sqrt( np.dot(vsum, vsum))
+        
+        self.orderPrime = ( newOrder - self.order) / self.tau
+        self.order = newOrder 
+    def updateShark(self, r):
+        """The idea is that the shark can move around and orient itself.""" 
+            
+        radius = 0.00
+        if r < self.sharkSpeed:
+            radius = self.habitatSize * 0.75 / self.sharkSpeed * r 
+        else:
+            radius = self.habitatSize * 0.75 
+        #Recall velocities go at speed omega * r, so total shark speed should be (omega theta^2 + omega phi^2
+        
+        if self.predatorLocationPrevious == None:
+            self.predatorLocationPrevious = np.sum(self.predatorLocation)/self.predatorNumber
+        
+        theta   = self.speed /  self.sharkSpeed  * r * self.tau
+        phi     = self.speed / self.sharkSpeed * r * self.tau
+        sharkCentre = np.array([ radius * np.cos(theta) * np.sin(phi), radius * np.sin(theta) * np.sin(phi), radius * np.cos(phi) ])
+        
+        sharkDiff = sharkCentre - self.predatorLocationPrevious  
+        
+        self.predatorLocation += sharkDiff
+        
+        self.predatorLocation = ethology.rotatepoints(number = self.predatorNumber, points = self.predatorLocation, difference=sharkDiff )
+        self.predatorLocationPrevious = sharkCentre
+        
+    def evolveDraw(self, r):
+        """ This can contain triggers for things to be drawn, e.g. the shark."""
+        if self.mode == 3:
+            #Draw shark
+            self.updateShark(r)
+             
+            self.axis.scatter( self.predatorLocation[:,0], self.predatorLocation[:,1], self.predatorLocation[:,2], color='r', s=4*self.length)
+        
+        
+        if self.mode == 1 or self.mode == 2 or self.mode == 3:  
             
             if self.noSphere == True:
                 u = np.linspace(0, 2 * np.pi, 100)
@@ -158,101 +200,13 @@ class Flock:
                 
                 self.noSphere = False;
             self.axis.plot_wireframe(self.sphere_x, self.sphere_y, self.sphere_z,  rstride=13, cstride=13, color='r', alpha=0.3)
-        if self.mode == 3:
-            #Draw shark
-            self.axis.scatter( self.predatorLocation[:,0], self.predatorLocation[:,1], self.predatorLocation[:,2], color='r')
-    def orderCalculation(self):
-        """Calculate the order parameter and its derivative"""
-        vsum = np.sum( self.velocities, axis=0) 
-        newOrder = 1.0/self.number/self.speed * np.sqrt( np.dot(vsum, vsum))
-        
-        self.orderPrime = ( newOrder - self.order) / self.tau
-        self.order = newOrder 
-    def initShark(self):
-        """Initialises THE SHARK"""
-        self.predatorNumber = 100
-        self.predatorLocation = np.ones((self.predatorNumber, 3)) * 3.0 * self.habitatSize; 
-        self.predatorSense = np.ones((self.predatorNumber,1))
-        self.predatorStrength = np.ones((self.predatorNumber,1))
-        
-        self.predatorLocation[0, :] = [-2.50, 0.00, 0.00]
-        self.predatorLocation[1, :] = [-2.00, 0.00, 0.00]
-        self.predatorLocation[2, :] = [-1.50, 0.00, 0.00]
-        self.predatorLocation[3, :] = [-1.00, 0.00, 0.00]
-        self.predatorLocation[4, :] = [-0.50, 0.00, 0.00]
-        self.predatorLocation[5, :] = [0.00, 0.00, 0.00]
-        self.predatorLocation[6, :] = [0.50, 0.00, 0.00]
-        self.predatorLocation[7, :] = [1.00, 0.00, 0.00]
-        self.predatorLocation[8, :] = [1.50, 0.00, 0.00]
-        self.predatorLocation[9, :] = [2.00, 0.00, 0.00]
-        self.predatorLocation[10, :] = [2.50, 0.00, 0.00]
-        
-        
-        self.predatorLocation[11, :] = [0.50, 0.30, 0.00]
-        self.predatorLocation[12, :] = [1.00, 0.30, 0.00]
-        self.predatorLocation[13, :] = [1.50, 0.30, 0.00]
-        self.predatorLocation[14, :] = [2.00, 0.30, 0.00]
-        self.predatorLocation[15, :] = [0.50, -0.30, 0.00]
-        self.predatorLocation[16, :] = [1.00, -0.30, 0.00]
-        self.predatorLocation[17, :] = [1.50, -0.30, 0.00]
-        self.predatorLocation[18, :] = [2.00, -0.30, 0.00]
-        
-        
-        self.predatorLocation[19, :] = [-2.50, 0.00, 0.50]
-        self.predatorLocation[20, :] = [-2.00, 0.00, 0.50]
-        self.predatorLocation[21, :] = [-1.50, 0.00, 0.50]
-        self.predatorLocation[22, :] = [-1.00, 0.00, 0.50]
-        self.predatorLocation[23, :] = [-0.50, 0.00, 0.50]
-        self.predatorLocation[24, :] = [0.00, 0.00, 0.50]
-        self.predatorLocation[25, :] = [0.50, 0.00, 0.50]
-        self.predatorLocation[26, :] = [1.00, 0.00, 0.50]
-        self.predatorLocation[27, :] = [1.50, 0.00, 0.50]
-        self.predatorLocation[28, :] = [2.00, 0.00, 0.50]
-        self.predatorLocation[29, :] = [2.50, 0.00, 0.50]
-        
-        
-        self.predatorLocation[30, :] = [0.50, 0.30, 0.30]
-        self.predatorLocation[31, :] = [1.00, 0.30, 0.30]
-        self.predatorLocation[32, :] = [1.50, 0.30, 0.30]
-        self.predatorLocation[33, :] = [2.00, 0.30, 0.30]
-        self.predatorLocation[34, :] = [0.50, -0.30, 0.30]
-        self.predatorLocation[35, :] = [1.00, -0.30, 0.30]
-        self.predatorLocation[36, :] = [1.50, -0.30, 0.30]
-        self.predatorLocation[37, :] = [2.00, -0.30, 0.30]
-        
-        
-        self.predatorLocation[38, :] = [-2.50, -0.00, 0.70]
-        self.predatorLocation[39, :] = [-2.50, -0.00, 0.90]
-         
-        self.predatorLocation[40, :] = [-2.70, -0.00, 0.70]
-        self.predatorLocation[41, :] = [-2.70, -0.00, 0.90]
-        
-        self.predatorLocation[42, :] = [-2.50, -0.00, 0.50] 
-        self.predatorLocation[43, :] = [-2.70, -0.00, 0.50] 
-        self.predatorLocation[46, :] = [-2.50, -0.00, 0.10] 
-        self.predatorLocation[47, :] = [-2.70, -0.00, 0.10]
-        self.predatorLocation[48, :] = [-2.50, -0.00, -0.10] 
-        self.predatorLocation[49, :] = [-2.70, -0.00, -0.10] 
-        self.predatorLocation[52, :] = [-2.50, -0.00, -0.50] 
-        self.predatorLocation[53, :] = [-2.70, -0.00, -0.50] 
-        self.predatorLocation[54, :] = [-2.70, -0.00, -0.90]
-        self.predatorLocation[55, :] = [-2.90, -0.00, -0.90]
-        
-        self.predatorLocation[56, :] = [0.70, -0.00, 1.00]
-        self.predatorLocation[57, :] = [0.70, -0.00, 1.50]
-        self.predatorLocation[57, :] = [0.50, -0.00, 1.50]
-
-        self.predatorLocation[58, :] = [-2.90, 0.00, 1.10]
-        
-        self.predatorLocation *= 10.00;
-        
     def evolve(self, r):
         """Function that calculates the next frame""" 
         newpositions, diff = self.behaviour() 
                 
         self.axis.cla ()
         if self.scatterPlot == True:
-            self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b');
+            self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
         else:
             self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], diff[:,0], diff[:,1], diff[:,2], length=self.length);
         
@@ -274,4 +228,204 @@ class Flock:
         self.lineOrder.set_data( self.timeData, self.orderData )
         self.lineOrderPrime.set_data( self.timeData, self.primeData )
   
+        self.evolveDraw(r)
         print "%d\t%2.3e\t%2.3e." % (r, self.order, self.orderPrime)
+    
+    def initShark(self):
+        """Initialises THE SHARK"""
+        self.predatorNumber = 61
+        self.predatorLocation = np.ones((self.predatorNumber, 3)); 
+        self.predatorSense = np.ones((self.predatorNumber,1))
+        self.predatorStrength = np.ones((self.predatorNumber,1)) 
+        
+        pixelNumber = 0
+        #One of those moments where you miss ++pixelNumber :(
+        self.predatorLocation[pixelNumber, :] = [-2.50, 0.00, 0.00] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.00, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-1.50, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-1.00, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-0.50, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.00, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, 0.00, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.50, 0.00, 0.00]
+        pixelNumber += 1 
+                     
+        self.predatorLocation[pixelNumber, :] = [0.50, 0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, 0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, 0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, 0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, -0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, -0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, -0.10, 0.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, -0.10, 0.00] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.00, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-1.50, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-1.00, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-0.50, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.00, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, 0.00, 0.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.50, 0.00, 0.50] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, 0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, 0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, 0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, 0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, -0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.00, -0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [1.50, -0.10, 0.30]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [2.00, -0.10, 0.30] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, 0.70]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, 0.90] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, 0.70]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, 0.90] 
+        pixelNumber += 1 
+        
+        
+        self.predatorLocation[pixelNumber, :] = [-3.00, -0.00, -1.10] 
+        pixelNumber += 1 
+        
+        
+        self.predatorLocation[pixelNumber, :] = [-3.10, -0.00, -1.10] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, 0.50] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, 0.50]   
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, 0.10] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, 0.10]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, -0.10] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, -0.10] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.50, -0.00, -0.50] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, -0.50] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.70, -0.00, -0.90]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.90, -0.00, -0.90] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.70, -0.00, 1.00]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.10, -0.00, 1.50]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.30, -0.00, 1.30]
+        pixelNumber += 1 
+        
+        
+        self.predatorLocation[pixelNumber, :] = [0.55, -0.00, 0.80]
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [0.50, -0.00, 1.10] 
+        pixelNumber += 1 
+        
+        self.predatorLocation[pixelNumber, :] = [-2.90, 0.00, 1.10] 
+        pixelNumber += 1 
+        
+        
+        self.predatorLocation[pixelNumber, :] = [2.70, 0.00, 0.00]
+        pixelNumber += 1 
+        print "The shark consists of %d dots." % pixelNumber
+        self.predatorLocation *= 10.00; 
+        self.predatorLocation -= 10.00; 
