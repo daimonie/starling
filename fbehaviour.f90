@@ -74,7 +74,7 @@ module ethology
         !$omp end parallel do
     end subroutine simplebehaviour
     
-    subroutine simplehabitat(number, positions, velocities, sensitivities, tau, eta, newpositions, &
+    subroutine bowlhabitat(number, positions, velocities, sensitivities, tau, eta, newpositions, &
         newvelocities, habitatsize, habitatstrength)
         implicit none
         !Pretty much the same function but we simulate a spherical habitat by using virtual fish
@@ -149,8 +149,8 @@ module ethology
             newvelocities(i,:) =  matmul(rotation, newvelocities(i,:))
         end do
         !$omp end parallel do
-    end subroutine simplehabitat
-    subroutine interactionhabitat(number, positions, velocities, sensitivities, tau, eta, i0, i1, &
+    end subroutine bowlhabitat
+    subroutine interactionbowlhabitat(number, positions, velocities, sensitivities, tau, eta, i0, i1, &
         i2, i3, i4, i5, newpositions, newvelocities, habitatsize, habitatstrength)
         implicit none 
         !Pretty much the same function but we simulate a spherical habitat by using virtual fish
@@ -244,9 +244,9 @@ module ethology
             newvelocities(i,:) =  matmul(rotation, newvelocities(i,:))
         end do
         !$omp end parallel do
-    end subroutine interactionhabitat
+    end subroutine interactionbowlhabitat
     
-    subroutine shark(number, positions, velocities, sensitivities, tau, eta, i0, i1, &
+    subroutine sharkbowl(number, positions, velocities, sensitivities, tau, eta, i0, i1, &
         i2, i3, i4, i5, newpositions, newvelocities, habitatsize, habitatstrength, &
         predatorsense, predatorstrength, predatorlocation, predatornumber)
         implicit none 
@@ -352,5 +352,5 @@ module ethology
             newvelocities(i,:) =  matmul(rotation, newvelocities(i,:))
         end do
         !$omp end parallel do
-    end subroutine shark
+    end subroutine sharkbowl
 end module ethology

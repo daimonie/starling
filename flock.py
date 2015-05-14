@@ -123,15 +123,15 @@ class Flock:
             
             return newpositions, diff
         elif self.mode == 1: #Simple + habitat
-            return ethology.simplehabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+            return ethology.bowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength)
         elif self.mode == 2: #Simple + habitat + nteraction
-            return ethology.interactionhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+            return ethology.interactionbowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
         elif self.mode == 3: #Simple + habitat + nteraction + SHARK
-            return ethology.shark( positions = self.positions, velocities = self.velocities, tau = self.tau,
+            return ethology.sharkbowl( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
