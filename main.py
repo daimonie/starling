@@ -24,7 +24,7 @@ if flocksim == 0:
 elif flocksim == 1:
     starlings.mode = 2
      
-    starlings.number = 100
+    starlings.number = 40
     starlings.tau = 0.1
     starlings.eta = 0.25
     starlings.speed = 25.0
@@ -51,7 +51,7 @@ elif flocksim == 2:
     print "SHARK TIME";
     starlings.mode = 3
     starlings.scatterPlot = True
-    starlings.number = 200
+    starlings.number = 80
     starlings.tau = 0.1
     starlings.eta = 0.25
     starlings.boxSize = 40.0
@@ -72,7 +72,7 @@ elif flocksim == 2:
 
     starlings.sensitivities *= 30.00
     starlings.display = 1
-    starlings.length = 5.0
+    starlings.length = 15.0
     
     starlings.initShark()
     starlings.predatorSense *= 50.00
