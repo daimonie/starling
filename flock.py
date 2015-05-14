@@ -50,6 +50,8 @@ class Flock:
     predatorNumber = 10
     predatorLocationPrevious = None
     
+    sharkSpeed = None
+    sharkOmega = None
     scatterPlot = False
     def __init__(self):
         """Mostly empty, except for a joke."""
@@ -157,45 +159,47 @@ class Flock:
         self.order = newOrder 
     def updateShark(self, r):
         """The idea is that the shark can move around and orient itself.""" 
-            
-        radius = self.habitatSize * 0.75 
-        #Recall velocities go at speed omega * r, so total shark speed should be (omega theta^2 + omega phi^2
-        
         if self.predatorLocationPrevious == None:
             self.predatorLocationPrevious = np.sum(self.predatorLocation)/self.predatorNumber
+        if r < 2:
+            return;
+        radius = 0.00
         
-        theta   = self.speed /  self.sharkSpeed  * r * self.tau
-        phi     = self.speed / self.sharkSpeed * r * self.tau
-        sharkCentre = np.array([ radius * np.cos(theta) * np.sin(phi), radius * np.sin(theta) * np.sin(phi), radius * np.cos(phi) ])
+        if r > self.sharkSpeed: 
+            radius = self.habitatSize * 0.75  
+            #Recall velocities go at speed omega * r, so total shark speed should be (omega theta^2 + omega phi^2
+            
+            
+            theta   = np.pi * 2 / 100.00 * (r-self.sharkSpeed) * self.tau * self.sharkOmega
+            phi     = np.pi/2.0 + np.pi / 200.00 * (r-self.sharkSpeed) * self.tau * self.sharkOmega
+            #print "ANGLE\t%2.3f\t%2.3f" % (theta, phi)
+            sharkCentre = np.array([ radius * np.cos(theta) * np.sin(phi), radius * np.sin(theta) * np.sin(phi), radius * np.cos(phi) ])
+        else:
+            sharkCentre = np.array([r / self.sharkSpeed * self.habitatSize*0.75, 0, 0])
         
         sharkDiff = sharkCentre - self.predatorLocationPrevious   
         
-        sharkDirection1 = 0.5 * ( self.predatorLocation[5,:] + self.predatorLocation[60,:])
-        sharkDirection1 /= np.sqrt( np.sum( np.square( sharkDirection1 )))
-         
+        #Arrow from shark belly to nose
+        sharkDirection = ( self.predatorLocation[60,:] - self.predatorLocation[5,:])
+        sharkDirection /= np.sqrt( np.sum( np.square( sharkDirection )))
+        
         self.predatorLocation += sharkDiff
         
-        sharkDirection2 = sharkDiff 
-        sharkDirection2Length = np.sqrt( np.sum( np.square( sharkDirection2 )))
-        if sharkDirection2Length > 0:
-            sharkDirection2 /= sharkDirection2Length
-        diffLength = np.sqrt( np.sum( np.square(sharkDiff)))
-        #If either the shark centre or the shark location are *not* zero
-        if diffLength > 0 and np.sum(np.square(sharkCentre)) > 0:
-            axis = np.cross( sharkDirection1, sharkDirection2) 
-            axisLength = np.sqrt(np.sum(np.square(axis)))
+        velocityCentre = sharkCentre - self.predatorLocationPrevious
+        velocityCentreLength = np.sqrt( np.sum( np.square( velocityCentre )))
+        if velocityCentreLength > 0:
+            velocityCentre /= velocityCentreLength
+            #Velocity direction is now normalised. Note that if it is zero, there is no change in direction
+            #and thus no need for rotation. 
+            axis = np.cross(sharkDirection, velocityCentre)
+            axisLength =  np.sqrt(np.sum( np.square( axis)))
             if axisLength > 0:
                 axis /= axisLength
-                
-                theta = np.arccos( np.inner(sharkDirection1, sharkDirection2) )
-                
+                theta = np.arccos( np.inner(sharkDirection, velocityCentre))
+                print "Rotating over [%2.3e]" % theta
                 self.predatorLocation = ethology.rotatepoints(number = self.predatorNumber, points = self.predatorLocation, axis=axis, theta=theta)
         self.predatorLocationPrevious = sharkCentre
-        
-        #for i in range(0, self.predatorNumber):
-                #print "%2.3e \t %2.3e \t %2.3e \t" % (self.predatorLocation[i,0], self.predatorLocation[i,1], self.predatorLocation[i,2])
-        #raise Exception("ERROR YOU ARE AN IDIOT THAT CANNEA GET IT RIGHT")
-        
+         
     def evolveDraw(self, r):
         """ This can contain triggers for things to be drawn, e.g. the shark."""
         if self.mode == 3:
@@ -447,5 +451,4 @@ class Flock:
         self.predatorLocation[pixelNumber, :] = [2.70, 0.00, 0.00]
         pixelNumber += 1 
         print "The shark consists of %d dots." % pixelNumber
-        self.predatorLocation *= 10.00; 
-        self.predatorLocation -= 10.00; 
+        self.predatorLocation *= 10.00;  

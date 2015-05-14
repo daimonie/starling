@@ -391,10 +391,18 @@ module ethology
         rotation(3,1) = axis(3) * axis(1) * (1 - cos(theta)) - axis(2) * sin(theta)
         rotation(3,2) = axis(3) * axis(2) * (1 - cos(theta)) + axis(1) * sin(theta)
         rotation(3,3) = cos(theta) + axis(3)**2 * (1 - cos(theta))
+        print *, "Rotation ends up at ", sum( matmul(rotation, transpose(rotation))) 
         
-        print *, "mm", sum(matmul( rotation, transpose(rotation)))/3.0, "\n" 
+        
+        call omp_set_num_threads(omp_get_max_threads());  
+        !$omp parallel do &
+        !$omp default(none) & 
+        !$omp private(i) &
+        !$omp firstprivate(centre, rotation, points) &
+        !$omp shared(returnpoints)
         do i = 1, number
             returnpoints(i,:) = centre + matmul( rotation, points(i,:) - centre)
         end do 
+        !$omp end parallel do
     end subroutine rotatepoints
 end module ethology
