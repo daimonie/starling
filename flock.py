@@ -176,17 +176,26 @@ class Flock:
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
-        elif self.mode == 5: #Simple + spring habitat + nteraction + SHARK 
+        elif self.mode == 5: #Simple + spring habitat + nteraction 
             return ethology.interactionboxhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
-        elif self.mode == 6:
+        elif self.mode == 6: #Torques
             newpositions, diff = ethology.interactionbowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
             self.orientations = self.calculateRotation()
             return newpositions, diff  
-        #predatorSense, predatorStrength, predatorLocation)
+        elif self.mode == 7: #Simple + spring habitat + nteraction + SHARK 
+            self.orientations = self.calculateRotation()
+            return ethology.sharkbox( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
+                predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
+        #ethology.interactionboxhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                #eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                #habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
+        ##predatorSense, predatorStrength, predatorLocation)
     def calculateRotation(self):        
         '''Calculates the new orientations of the individuals'''
         neworientations = ethology.simplerotation(number = self.number, viscosity = self.viscosity, cutoff = self.torqueCutOff, 
@@ -202,7 +211,7 @@ class Flock:
             self.axis.set_xlim(np.min( self.positions[:,0]), np.max( self.positions[:,0]))
             self.axis.set_ylim(np.min( self.positions[:,1]), np.max( self.positions[:,1]))
             self.axis.set_zlim(np.min( self.positions[:,2]), np.max( self.positions[:,2])) 
-        elif self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 4 or self.mode == 5: 
+        elif self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 4 or self.mode == 5 or self.mode == 7: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
             self.axis.set_zlim( -self.habitatSize, self.habitatSize ) 
@@ -216,6 +225,7 @@ class Flock:
         self.order = newOrder 
     def updateShark(self, r):
         """The idea is that the shark can move around and orient itself.""" 
+        print 'Hola, I am a Shark!'
         if self.predatorLocationPrevious == None:
             self.predatorLocationPrevious = np.sum(self.predatorLocation)/self.predatorNumber
         if r < 2:
@@ -223,7 +233,7 @@ class Flock:
         radius = 0.00
         
         if r > self.sharkSpeed: 
-            if self.mode == 4:
+            if self.mode == 4 or self.mode == 7:
                 radius = self.habitatSize * 0.75 *(2.0+ np.cos(np.pi * 2.00 * r / 250.00))/3.00
             elif self.mode == 3:
                 radius = self.habitatSize * 0.75
@@ -265,7 +275,7 @@ class Flock:
          
     def evolveDraw(self, r):
         """ This can contain triggers for things to be drawn, e.g. the shark."""
-        if self.mode == 3 or self.mode == 4:
+        if self.mode == 3 or self.mode == 4 or self.mode == 7:
             #Draw shark
             self.updateShark(r)
              
@@ -292,7 +302,7 @@ class Flock:
         self.axis.cla ()
         if self.scatterPlot == True:
             self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
-        elif self.mode == 6:
+        elif self.mode == 6 or self.mode == 7:
             self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.orientations[:,0], self.orientations[:,1], self.orientations[:,2], length=self.length);
         else:
             self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.velocities[:,0], self.velocities[:,1], self.velocities[:,2], length=self.length);
