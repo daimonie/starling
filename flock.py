@@ -19,7 +19,13 @@ class Flock:
     alignWithNeighbors = None  
     seeTheFlock1 = None    
     seeTheFlock2 = None     
-    seeTheFlock3 = None     
+    seeTheFlock3 = None
+    numNeighbours = None
+    countYN = 0
+    countAll = 0
+    zeroOrient = 0
+    typ = None
+    difTypes = False
     
     speed = None
     figure = None
@@ -120,7 +126,7 @@ class Flock:
         
         self.orderCalculation()
         
-        self.orientations = self.velocities / self.speed 
+        self.orientations = self.velocities / self.speed
         
     def show(self):
         """Function that sets the animation running""" 
@@ -148,7 +154,12 @@ class Flock:
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
-        
+        elif self.mode == 6:
+            newpositions, diff = ethology.interactionbowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
+            self.orientations = self.calculateRotation()
+            return newpositions, diff
         #predatorSense, predatorStrength, predatorLocation)
     def calculateRotation(self):        
         '''Calculates the new orientations of the individuals'''
@@ -157,6 +168,8 @@ class Flock:
                                                   tboundary3 = self.seeTheFlock3, talign = self.alignWithNeighbors, 
                                                   positions = self.positions, orientations = self.orientations)
         return neworientations
+    #neworientations, numneigh,torqueBoundary
+    #return neworientations,numneigh,torqueBoundary
     def setAxes(self):
         """Proper axes given self.mode"""
         if self.mode == 0: 
@@ -230,7 +243,7 @@ class Flock:
             #self.axis.set_ylim(np.min( self.predatorLocation[:,1]), np.max( self.predatorLocation[:,1]))
             #self.axis.set_zlim(np.min( self.predatorLocation[:,2]), np.max( self.predatorLocation[:,2])) 
         
-        if self.mode == 1 or self.mode == 2 or self.mode == 3:  
+        if self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 6:  
             
             if self.noSphere == True:
                 u = np.linspace(0, 2 * np.pi, 100)
@@ -245,13 +258,14 @@ class Flock:
     def evolve(self, r):
         """Function that calculates the next frame""" 
         newpositions, diff = self.behaviour() 
-        neworientations = self.calculateRotation()
-                
+        #neworientations, numNeighbours, torque = self.calculateRotation() 
+
+            
         self.axis.cla ()
         if self.scatterPlot == True:
             self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
         else:
-            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], neworientations[:,0], neworientations[:,1], neworientations[:,2], length=self.length);
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.orientations[:,0], self.orientations[:,1], self.orientations[:,2], length=self.length);
         
         self.setAxes()
         
@@ -273,6 +287,7 @@ class Flock:
   
         self.evolveDraw(r)
         print "%d\t%2.3e\t%2.3e." % (r, self.order, self.orderPrime)
+        #print 'Orient=', self.orientations
     
     def initShark(self):
         """Initialises THE SHARK"""

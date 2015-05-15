@@ -2,14 +2,8 @@ from flock import Flock
 import numpy as np
 
 starlings = Flock()
-flocksim = 2
+flocksim = 1
 
-starlings.viscosity = 1e0      
-starlings.torqueCutOff = 1e10     
-starlings.alignWithNeighbors = 1e10   
-starlings.seeTheFlock1 = 1e10      
-starlings.seeTheFlock2 = 1e10      
-starlings.seeTheFlock3 = 1e10    
 
 if flocksim == 0:
     starlings.mode = 1
@@ -30,9 +24,15 @@ if flocksim == 0:
     starlings.length = 10.0
     starlings.show()
 elif flocksim == 1:
-    starlings.mode = 2
-     
-    starlings.number = 40
+    starlings.viscosity = 1e-1      
+    starlings.torqueCutOff = 7e1  
+    starlings.alignWithNeighbors = 1e-3
+    starlings.seeTheFlock1 = 1e-3*0     
+    starlings.seeTheFlock2 = 1e-3*0      
+    starlings.seeTheFlock3 = 1e-3*1 
+    starlings.mode = 6
+        
+    starlings.number = 400
     starlings.tau = 0.1
     starlings.eta = 0.25
     starlings.speed = 25.0
@@ -48,8 +48,8 @@ elif flocksim == 1:
     starlings.i4 = -0.20
     starlings.i5 = 0.65 
     
-    starlings.velocities = np.ones((starlings.number,3), dtype=np.float)
-    starlings.positions[ int(starlings.number/2):,:] += 0.8 * starlings.habitatSize / (2.0**0.5)
+    #starlings.velocities = np.ones((starlings.number,3), dtype=np.float)
+    #starlings.positions[ int(starlings.number/2):,:] += 0.8 * starlings.habitatSize / (2.0**0.5)
 
     starlings.sensitivities *= 30.00
     starlings.display = 1

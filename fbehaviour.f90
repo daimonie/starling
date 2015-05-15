@@ -377,7 +377,7 @@ module ethology
     end subroutine rotatepoints
 
     subroutine simplerotation(number, positions, orientations, viscosity, cutOff, tau, Tboundary1, Tboundary2, Tboundary3, &
-        Talign, neworientations)
+        Talign, neworientations)!,A)
         implicit none
         
         integer, intent(in) :: number
@@ -386,14 +386,19 @@ module ethology
         double precision, intent(in), dimension(number, 3) :: positions, orientations 
 
         double precision, intent(out), dimension(number, 3) :: neworientations
+	!double precision, intent(out), dimension(number, 3) :: A
      
         integer :: omp_get_thread_num, id, threadNum, omp_get_max_threads, i, j
 	double precision :: distancesquared, factor
-	integer, dimension(number) :: numNeighbors
-	double precision, dimension(number) :: angleCM, localCMmagnitude
-	double precision, dimension(number, 3) :: torque, torqueAlign, torqueBoundary, localCM
+	double precision, dimension(number) :: numNeighbors
+	double precision, dimension(number) :: angleCM, localCMmagnitude, orientationsMagnitude
+	double precision, dimension(number, 3) :: torque, torqueBoundary, localCM, normOrient, torqueAlign
 
+	do i=1,number
+		normOrient(i,:) = orientations(i,:)/sqrt(dot_product(orientations(i,:),orientations(i,:)))
+	end do
 
+	torqueAlign(:,:) = 0.00
 	distancesquared = 0.00
 	numNeighbors(:) = 0
 	localCM(:,:) = 0.00
@@ -402,14 +407,14 @@ module ethology
         !$omp default(none) & 
         !$omp private(i,j,distancesquared) &
         !$omp firstprivate(number,positions,cutOff) &
-        !$omp shared(torqueAlign,localCM,numNeighbors,orientations)
+        !$omp shared(torqueAlign,localCM,numNeighbors,normOrient)
         do i = 1, number
             do j = 1, number
                 if (i < j) then
                     distancesquared = dot_product( positions(i,:) - positions(j,:), positions(i,:) - positions(j,:))
                     if (distancesquared < cutOff**2 ) then
-                        torqueAlign(i,:) = torqueAlign(i,:) + orientations(i,:) - orientations(j,:)
-                        torqueAlign(j,:) = torqueAlign(j,:) + orientations(j,:) - orientations(i,:)
+                        torqueAlign(i,:) = torqueAlign(i,:) + normOrient(i,:) - normOrient(j,:)
+                        torqueAlign(j,:) = torqueAlign(j,:) + normOrient(j,:) - normOrient(i,:)
 			localCM(i,:) = localCM(i,:) + positions(j,:)
 			localCM(j,:) = localCM(j,:) + positions(i,:)
 			numNeighbors(i) = numNeighbors(i) + 1
@@ -429,20 +434,22 @@ module ethology
 	do i = 1, number
 		if (numNeighbors(i) > 0) then
 			localCM(i,:) = localCM(i,:) / numNeighbors(i)
-			localCMmagnitude(i) = (dot_product(localCM(i,:), localCM(i,:)))**0.5
-			angleCM(i) = abs(acos( dot_product(orientations(i,:), localCM(i,:)) / localCMmagnitude(i) ))
-			factor = Tboundary1 * angleCM(i) + Tboundary2 * localCMmagnitude(i) + Tboundary2 * angleCM(i) * localCMmagnitude(i)
+			localCMmagnitude(i) = sqrt(dot_product(localCM(i,:), localCM(i,:)))
+			orientationsMagnitude(i) = sqrt(dot_product(normOrient(i,:), normOrient(i,:)))
+			angleCM(i) = acos( dot_product(normOrient(i,:), localCM(i,:)) / (localCMmagnitude(i)*orientationsMagnitude(i)) )
+			factor = Tboundary1 * angleCM(i) + Tboundary2 * localCMmagnitude(i) + Tboundary3 * angleCM(i) * localCMmagnitude(i)
 			torqueBoundary(i, :) = (localCM(i,:) / localCMmagnitude(i)) * factor
 		else if (numNeighbors(i) == 0) then
 			torqueBoundary(i, :) = [0.0,0.0,0.0]
 		end if
 	end do
-	 
+	
 	torque = torqueAlign + torqueBoundary
 
-	neworientations = orientations + tau * torque / viscosity
+	neworientations = normOrient + tau * torque / viscosity
 	do i = 1, number
 		neworientations(i,:) = neworientations(i,:) / (dot_product(neworientations(i,:),neworientations(i,:)))**0.5
 	end do
+	!A(:,:) =0.0
     end subroutine simplerotation
 end module ethology
