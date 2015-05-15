@@ -18,8 +18,6 @@ args = parser.parse_args();
 flocksim = args.mode
 filename = args.filename + ".mp4"
 snapshots = args.snapshots #number of frames
-if flocksim > -1:
-    raise Exception("No support yet")
 if flocksim == 0:
     starlings.mode = 1
     starlings.number = 40
@@ -37,7 +35,7 @@ if flocksim == 0:
     starlings.sensitivities *= 30.00
     starlings.display = 1
     starlings.length = 10.0
-    starlings.show()
+    starlings.record(filename, snapshots)
 elif flocksim == 1:
     starlings.mode = 2
      
@@ -63,7 +61,7 @@ elif flocksim == 1:
     starlings.sensitivities *= 30.00
     starlings.display = 1
     starlings.length = 10.0
-    starlings.show()
+    starlings.record(filename, snapshots)
 elif flocksim == 2:
     print "SHARK TIME";
     starlings.mode = 3
@@ -106,7 +104,7 @@ elif flocksim == 2:
     starlings.sharkSpeed = 25.0
     starlings.sharkOmega = 25.0
     
-    starlings.show()
+    starlings.record(filename, snapshots)
     
     
 elif flocksim == 4: 
@@ -143,7 +141,7 @@ elif flocksim == 4:
     starlings.display = 1
     starlings.length = 15.0 
     
-    starlings.show()
+    starlings.record(filename, snapshots)
 elif flocksim == 3:
     print "SHARK TIME 2";
     starlings.mode = 4
@@ -178,7 +176,7 @@ elif flocksim == 3:
     starlings.sharkSpeed = 25.0
     starlings.sharkOmega = 25.0
     
-    starlings.show()
+    starlings.record(filename, snapshots)
 elif flocksim == 5: 
     starlings.mode = 5
     starlings.scatterPlot = True
@@ -212,7 +210,7 @@ elif flocksim == 5:
     starlings.sharkSpeed = 25.0
     starlings.sharkOmega = 25.0
     
-    starlings.show()
+    starlings.record(filename, snapshots)
 else: 
     starlings.mode = 0
     starlings.number = 60
