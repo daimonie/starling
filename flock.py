@@ -292,8 +292,10 @@ class Flock:
         self.axis.cla ()
         if self.scatterPlot == True:
             self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
-        else:
+        elif self.mode == 6:
             self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.orientations[:,0], self.orientations[:,1], self.orientations[:,2], length=self.length);
+        else:
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.velocities[:,0], self.velocities[:,1], self.velocities[:,2], length=self.length);
         
         self.setAxes()
         
