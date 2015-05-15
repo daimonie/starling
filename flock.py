@@ -137,6 +137,15 @@ class Flock:
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
+        elif self.mode == 4: #Simple + spring habitat + nteraction + SHARK 
+            return ethology.sharkbox( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
+                predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
+        elif self.mode == 5: #Simple + spring habitat + nteraction + SHARK 
+            return ethology.interactionboxhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
         
         #predatorSense, predatorStrength, predatorLocation)
     def setAxes(self):
@@ -145,7 +154,7 @@ class Flock:
             self.axis.set_xlim(np.min( self.positions[:,0]), np.max( self.positions[:,0]))
             self.axis.set_ylim(np.min( self.positions[:,1]), np.max( self.positions[:,1]))
             self.axis.set_zlim(np.min( self.positions[:,2]), np.max( self.positions[:,2])) 
-        elif self.mode == 1 or self.mode == 2 or self.mode == 3: 
+        elif self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 4 or self.mode == 5: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
             self.axis.set_zlim( -self.habitatSize, self.habitatSize ) 
@@ -166,9 +175,11 @@ class Flock:
         radius = 0.00
         
         if r > self.sharkSpeed: 
-            radius = self.habitatSize * 0.75  
+            if self.mode == 4:
+                radius = self.habitatSize * 0.75 *(2.0+ np.cos(np.pi * 2.00 * r / 250.00))/3.00
+            elif self.mode == 3:
+                radius = self.habitatSize * 0.75
             #Recall velocities go at speed omega * r, so total shark speed should be (omega theta^2 + omega phi^2
-            
             
             theta   = np.pi * 2 / 100.00 * (r-self.sharkSpeed) * self.tau * self.sharkOmega
             phi     = np.pi/2.0 + np.pi / 200.00 * (r-self.sharkSpeed) * self.tau * self.sharkOmega
@@ -199,18 +210,18 @@ class Flock:
                 print "Rotating over [%2.3e]" % theta
                 self.predatorLocation = ethology.rotatepoints(number = self.predatorNumber, points = self.predatorLocation, axis=axis, theta=theta)
         self.predatorLocationPrevious = sharkCentre
+        
+        boidCentre = np.sum( self.positions, axis=0)/self.number
+        
+        print "Centre of mass distance from shark is [%2.3e]" % ( np.sum(np.square( boidCentre - sharkCentre))**0.5)
          
     def evolveDraw(self, r):
         """ This can contain triggers for things to be drawn, e.g. the shark."""
-        if self.mode == 3:
+        if self.mode == 3 or self.mode == 4:
             #Draw shark
             self.updateShark(r)
              
-            self.axis.scatter( self.predatorLocation[:,0], self.predatorLocation[:,1], self.predatorLocation[:,2], color='r', s=4*self.length)
-        
-            #self.axis.set_xlim(np.min( self.predatorLocation[:,0]), np.max( self.predatorLocation[:,0]))
-            #self.axis.set_ylim(np.min( self.predatorLocation[:,1]), np.max( self.predatorLocation[:,1]))
-            #self.axis.set_zlim(np.min( self.predatorLocation[:,2]), np.max( self.predatorLocation[:,2])) 
+            self.axis.scatter( self.predatorLocation[:,0], self.predatorLocation[:,1], self.predatorLocation[:,2], color='r', s=4*self.length) 
         
         if self.mode == 1 or self.mode == 2 or self.mode == 3:  
             
@@ -451,4 +462,3 @@ class Flock:
         self.predatorLocation[pixelNumber, :] = [2.70, 0.00, 0.00]
         pixelNumber += 1 
         print "The shark consists of %d dots." % pixelNumber
-        self.predatorLocation *= 10.00;  
