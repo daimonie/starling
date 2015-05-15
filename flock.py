@@ -1,10 +1,11 @@
+import matplotlib 
 from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib
 import matplotlib.animation as animation
 from fbehaviour import ethology
 from matplotlib.ticker import NullFormatter
+
 class Flock:
     number = 10
     tau = None
@@ -116,6 +117,42 @@ class Flock:
         self.axisOrderPrime.set_ylim( 0, 1.0/self.tau)
         self.ani = animation.FuncAnimation(self.figure, self.evolve, interval=self.display) 
         plt.show()
+        
+    def record(self, filename, snapshots):
+        """Function that sets the animation running""" 
+        self.axisOrderPrime.set_ylim( 0, 1.0/self.tau)
+        
+        print "Attempting to generate [%s] with [%d] frames." % (filename, snapshots)
+        
+        avConvWriter = animation.writers['avconv']
+        metaData = dict(title='Movie, mode %d' % self.mode, artist='Daimonie', comment = 'Flock-sim starling, local rules into collective behaviour')
+        
+        writer = avConvWriter(fps=60, metadata=metaData)
+        
+        with writer.saving(self.figure, filename, snapshots):
+            for r in range(snapshots):
+                self.evolve(r)
+                writer.grab_frame()
+            
+        #FFMpegWriter = manimation.writers['avconv']
+        #metadata = dict(title='Movie Test', artist='Matplotlib',
+                #comment='Movie support!')
+        #writer = FFMpegWriter(fps=15, metadata=metadata)
+
+        #fig = plt.figure()
+        #l, = plt.plot([], [], 'k-o')
+
+        #plt.xlim(-5, 5)
+        #plt.ylim(-5, 5)
+
+        #x0,y0 = 0, 0
+
+        #with writer.saving(fig, "writer_test.mp4", 100):
+            #for i in range(100):
+                #x0 += 0.1 * np.random.randn()
+                #y0 += 0.1 * np.random.randn()
+                #l.set_data(x0, y0)
+                #writer.grab_frame() 
     def behaviour(self):
         """This returns the proper calculation given self.mode"""
         if self.mode == 0: #Simplest behaviour
