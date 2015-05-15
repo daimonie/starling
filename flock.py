@@ -13,6 +13,20 @@ class Flock:
     velocities = None
     sensitivities = None
     eta = None
+    #Torque parameters:  
+    orientations = None   
+    viscosity = None       
+    torqueCutOff = None     
+    alignWithNeighbors = None  
+    seeTheFlock1 = None    
+    seeTheFlock2 = None     
+    seeTheFlock3 = None
+    numNeighbours = None
+    countYN = 0
+    countAll = 0
+    zeroOrient = 0
+    typ = None
+    difTypes = False
     
     speed = None
     figure = None
@@ -112,6 +126,9 @@ class Flock:
         self.sensitivities = np.ones((self.number,1), dtype=np.float)
         
         self.orderCalculation()
+        
+        self.orientations = self.velocities / self.speed
+        
     def show(self):
         """Function that sets the animation running""" 
         self.axisOrderPrime.set_ylim( 0, 1.0/self.tau)
@@ -133,26 +150,6 @@ class Flock:
             for r in range(snapshots):
                 self.evolve(r)
                 writer.grab_frame()
-            
-        #FFMpegWriter = manimation.writers['avconv']
-        #metadata = dict(title='Movie Test', artist='Matplotlib',
-                #comment='Movie support!')
-        #writer = FFMpegWriter(fps=15, metadata=metadata)
-
-        #fig = plt.figure()
-        #l, = plt.plot([], [], 'k-o')
-
-        #plt.xlim(-5, 5)
-        #plt.ylim(-5, 5)
-
-        #x0,y0 = 0, 0
-
-        #with writer.saving(fig, "writer_test.mp4", 100):
-            #for i in range(100):
-                #x0 += 0.1 * np.random.randn()
-                #y0 += 0.1 * np.random.randn()
-                #l.set_data(x0, y0)
-                #writer.grab_frame() 
     def behaviour(self):
         """This returns the proper calculation given self.mode"""
         if self.mode == 0: #Simplest behaviour
@@ -179,19 +176,42 @@ class Flock:
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
                 predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
-        elif self.mode == 5: #Simple + spring habitat + nteraction + SHARK 
+        elif self.mode == 5: #Simple + spring habitat + nteraction 
             return ethology.interactionboxhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
                 eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
                 habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
-        
-        #predatorSense, predatorStrength, predatorLocation)
+        elif self.mode == 6: #Torques
+            newpositions, diff = ethology.interactionbowlhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
+            self.orientations = self.calculateRotation()
+            return newpositions, diff  
+        elif self.mode == 7: #Simple + spring habitat + nteraction + SHARK 
+            self.orientations = self.calculateRotation()
+            return ethology.sharkbox( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5,
+                predatorsense=self.predatorSense, predatorstrength=self.predatorStrength, predatorlocation = self.predatorLocation, predatornumber=self.predatorNumber)
+        #ethology.interactionboxhabitat( positions = self.positions, velocities = self.velocities, tau = self.tau,
+                #eta=self.eta, sensitivities=self.sensitivities, number=self.number, habitatsize=self.habitatSize,
+                #habitatstrength=self.habitatStrength, i0=self.i0, i1=self.i1,i2=self.i2, i3=self.i3, i4=self.i4, i5=self.i5)
+        ##predatorSense, predatorStrength, predatorLocation)
+    def calculateRotation(self):        
+        '''Calculates the new orientations of the individuals'''
+        neworientations = ethology.simplerotation(number = self.number, viscosity = self.viscosity, cutoff = self.torqueCutOff, 
+                                                  tau = self.tau, tboundary1 = self.seeTheFlock1, tboundary2 = self.seeTheFlock2, 
+                                                  tboundary3 = self.seeTheFlock3, talign = self.alignWithNeighbors, 
+                                                  positions = self.positions, orientations = self.orientations)
+        return neworientations
+    #neworientations, numneigh,torqueBoundary
+    #return neworientations,numneigh,torqueBoundary
     def setAxes(self):
         """Proper axes given self.mode"""
         if self.mode == 0: 
             self.axis.set_xlim(np.min( self.positions[:,0]), np.max( self.positions[:,0]))
             self.axis.set_ylim(np.min( self.positions[:,1]), np.max( self.positions[:,1]))
             self.axis.set_zlim(np.min( self.positions[:,2]), np.max( self.positions[:,2])) 
-        elif self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 4 or self.mode == 5: 
+        elif self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 4 or self.mode == 5 or self.mode == 7: 
             self.axis.set_xlim( -self.habitatSize, self.habitatSize )
             self.axis.set_ylim( -self.habitatSize, self.habitatSize )
             self.axis.set_zlim( -self.habitatSize, self.habitatSize ) 
@@ -205,6 +225,7 @@ class Flock:
         self.order = newOrder 
     def updateShark(self, r):
         """The idea is that the shark can move around and orient itself.""" 
+        print 'Hola, I am a Shark!'
         if self.predatorLocationPrevious == None:
             self.predatorLocationPrevious = np.sum(self.predatorLocation)/self.predatorNumber
         if r < 2:
@@ -212,7 +233,7 @@ class Flock:
         radius = 0.00
         
         if r > self.sharkSpeed: 
-            if self.mode == 4:
+            if self.mode == 4 or self.mode == 7:
                 radius = self.habitatSize * 0.75 *(2.0+ np.cos(np.pi * 2.00 * r / 250.00))/3.00
             elif self.mode == 3:
                 radius = self.habitatSize * 0.75
@@ -254,13 +275,13 @@ class Flock:
          
     def evolveDraw(self, r):
         """ This can contain triggers for things to be drawn, e.g. the shark."""
-        if self.mode == 3 or self.mode == 4:
+        if self.mode == 3 or self.mode == 4 or self.mode == 7:
             #Draw shark
             self.updateShark(r)
              
             self.axis.scatter( self.predatorLocation[:,0], self.predatorLocation[:,1], self.predatorLocation[:,2], color='r', s=4*self.length) 
         
-        if self.mode == 1 or self.mode == 2 or self.mode == 3:  
+        if self.mode == 1 or self.mode == 2 or self.mode == 3 or self.mode == 6:  
             
             if self.noSphere == True:
                 u = np.linspace(0, 2 * np.pi, 100)
@@ -275,12 +296,16 @@ class Flock:
     def evolve(self, r):
         """Function that calculates the next frame""" 
         newpositions, diff = self.behaviour() 
-                
+        #neworientations, numNeighbours, torque = self.calculateRotation() 
+
+            
         self.axis.cla ()
         if self.scatterPlot == True:
             self.axis.scatter(newpositions[:,0], newpositions[:,1], newpositions[:,2], color='b', s=self.length);
+        elif self.mode == 6 or self.mode == 7:
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.orientations[:,0], self.orientations[:,1], self.orientations[:,2], length=self.length);
         else:
-            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], diff[:,0], diff[:,1], diff[:,2], length=self.length);
+            self.axis.quiver(newpositions[:,0], newpositions[:,1], newpositions[:,2], self.velocities[:,0], self.velocities[:,1], self.velocities[:,2], length=self.length);
         
         self.setAxes()
         
@@ -302,6 +327,7 @@ class Flock:
   
         self.evolveDraw(r)
         print "%d\t%2.3e\t%2.3e." % (r, self.order, self.orderPrime)
+        #print 'Orient=', self.orientations
     
     def initShark(self):
         """Initialises THE SHARK"""
@@ -483,8 +509,7 @@ class Flock:
         pixelNumber += 1 
         
         self.predatorLocation[pixelNumber, :] = [0.30, -0.00, 1.30]
-        pixelNumber += 1 
-        
+        pixelNumber += 1  
         
         self.predatorLocation[pixelNumber, :] = [0.55, -0.00, 0.80]
         pixelNumber += 1 
